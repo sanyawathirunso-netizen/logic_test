@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Dungeon of Logic</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;500;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4a148c;
+      --secondary-color: #ffab00;
+      --bg-color: #1a1a2e;
+      --text-color: #ffffff;
+      --success-color: #00c853;
+      --danger-color: #ff1744;
+    }
+
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1920'); 
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text-color);
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    #game-container {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(22, 33, 62, 0.95);
+      border: 4px solid var(--secondary-color);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 0 30px rgba(255, 171, 0, 0.3);
+      position: relative;
+    }
+
+    .screen { display: none; text-align: center; }
+    .screen.active { display: block; animation: fadeIn 0.5s; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    h1 {
+      font-family: 'Press Start 2P', cursive;
+      font-size: 24px;
+      color: var(--secondary-color);
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+
+    .adventure-img {
+      width: 150px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      width: 80%;
+      margin: 0 auto 15px auto;
+    }
+
+    input[type="text"], input[type="number"] {
+      padding: 12px;
+      border-radius: 5px;
+      border: 2px solid #0f3460;
+      background: #1a1a2e;
+      color: #fff;
+      font-size: 18px;
+      font-family: 'Kanit', sans-serif;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      outline: none;
+      border-color: var(--secondary-color);
+    }
+
+    #student-name { width: 80%; margin: 0 auto 15px auto; display: block; }
+    #student-room { width: 50%; }
+    #student-no { width: 50%; }
+
+    button {
+      background: var(--secondary-color);
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    button:hover { transform: scale(1.1); background: #ffd600; }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 10px;
+      background: #0f3460;
+      border-radius: 10px;
+      font-size: 14px;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .warning-box {
+      color: var(--danger-color);
+      font-weight: bold;
+      background: rgba(255, 23, 68, 0.1);
+      padding: 5px 10px;
+      border-radius: 5px;
+      border: 1px solid var(--danger-color);
+    }
+
+    .progress-bar {
+      height: 10px;
+      background: #555;
+      border-radius: 5px;
+      margin-bottom: 20px;
+    }
+
+    #progress-inner {
+      height: 100%;
+      width: 0%;
+      background: var(--secondary-color);
+      border-radius: 5px;
+      transition: width 0.3s;
+    }
+
+    .question-box {
+      font-size: 32px;
+      margin: 40px 0;
+      padding: 20px;
+      background: #1a1a2e;
+      border: 2px dashed var(--secondary-color);
+      border-radius: 10px;
+    }
+
+    .logic-symbol { color: var(--secondary-color); font-weight: bold; }
+    .truth-value { color: #81d4fa; }
+
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .btn-true { background: var(--success-color); color: white; min-width: 150px; }
+    .btn-false { background: var(--danger-color); color: white; min-width: 150px; }
+
+    .result-score { font-size: 48px; color: var(--secondary-color); margin: 20px 0; position: relative; display: inline-block; }
+    .save-status { color: #81d4fa; font-style: italic; font-size: 16px; margin-top: 10px; }
+
+    /* =========================================================
+       ✨ ส่วนของ CSS มังกรและเอฟเฟกต์เฉลิมฉลองคะแนนเต็ม
+       ========================================================= */
+    #dragon-sprite {
+      display: none;
+      position: absolute;
+      width: 180px;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    /* แอนิเมชันตอนมังกรบินออกมาสถิตตรงกลางจอ */
+    .dragon-fly-in {
+      display: block !important;
+      animation: dragonFly 4s ease-in-out forwards;
+    }
+
+    @keyframes dragonFly {
+      0% {
+        top: -150px;
+        left: -200px;
+        transform: scale(0.2) rotate(20deg);
+        opacity: 0;
+      }
+      30% {
+        top: 20%;
+        left: 40%;
+        transform: scale(1.5) rotate(-10deg);
+        opacity: 1;
+      }
+      45% {
+        top: 25%;
+        left: 38%;
+        transform: scale(1.4) rotate(5deg);
+      }
+      60% {
+        top: -30px;
+        left: calc(100% + 50px);
+        transform: scale(0.8) rotate(15deg);
+        opacity: 0.8;
+      }
+      100% {
+        top: -70px;
+        left: 80%;
+        transform: scale(1.1) rotate(-5deg);
+        opacity: 1; /* เกาะอยู่มุมบนขวาของกล่องเกมหลังบินเสร็จ */
+      }
+    }
+
+    /* เอฟเฟกต์วงแหวนเรืองแสงรอบคะแนนเต็ม */
+    .perfect-glow {
+      text-shadow: 0 0 20px #ffea00, 0 0 30px #ffaa00;
+      animation: pulseGlow 1.5s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  
+  <img id="dragon-sprite" src="https://i.pinimg.com/originals/47/7b/7c/477b7c83cd264095fa30d804d29643ec.gif" alt="Dragon">
+
+  <div id="start-screen" class="screen active">
+    <img src="https://sk-thonburi.ac.th/wp-content/uploads/2025/07/cropped-logo.png" alt="Warrior" class="adventure-img">
+    <h1>DUNGEON OF LOGIC</h1>
+    <p>ยินดีต้อนรับนักรบ! จงใช้ความรู้เรื่องตรรกศาสตร์ (และ, หรือ)<br>เพื่อผ่านด่านมหาภัยสุ่ม 10 ประตู</p>
+    <p style="color: var(--danger-color); font-size: 14px;">⚠️ คำเตือน: ห้ามสลับหน้าจอหรือเปิดแท็บอื่นเด็ดขาด! หากทำผิดเกิน 2 ครั้ง จะถูกปรับแพ้ทันที</p>
+    
+    <input type="text" id="student-name" placeholder="ระบุชื่อ-นามสกุลของคุณที่นี่..." required>
+    <div class="form-group">
+      <input type="text" id="student-room" placeholder="ห้อง (เช่น ม.4/1)" required>
+      <input type="number" id="student-no" placeholder="เลขที่" min="1" required>
+    </div>
+    
+    <button onclick="startGame()">เริ่มการผจญภัย</button>
+  </div>
+
+  <div id="game-screen" class="screen">
+    <div class="game-header">
+      <span>ผู้กล้า: <span id="display-info"></span></span>
+      <span>ด่านที่: <span id="current-level">1</span>/10</span>
+      <span>คะแนน: <span id="current-score">0</span></span>
+      <span class="warning-box">เตือนสลับจอ: <span id="warning-count">0</span>/2</span>
+    </div>
+    <div class="progress-bar">
+      <div id="progress-inner"></div>
+    </div>
+    <p id="narrative">ประตูปีศาจปรากฏขึ้น! จงหาค่าความจริงของประพจน์นี้:</p>
+    <div class="question-box" id="question-text"></div>
+    <div class="btn-group">
+      <button class="btn-true" onclick="checkAnswer(true)">จริง (T)</button>
+      <button class="btn-false" onclick="checkAnswer(false)">เท็จ (F)</button>
+    </div>
+  </div>
+
+  <div id="end-screen" class="screen">
+    <h1 id="end-title">ภารกิจเสร็จสิ้น!</h1>
+    <p id="result-message"></p>
+    <div id="score-box" class="result-score"><span id="final-score">0</span>/10</div>
+    <p id="save-status" class="save-status">กำลังบันทึกคะแนนลงฐานข้อมูลระบบหลังบ้าน...</p>
+    <button onclick="location.reload()">เล่นใหม่อีกครั้ง</button>
+  </div>
+
+</div>
+
+<script>
+  let name = "";
+  let room = "";
+  let no = "";
+  let currentLevel = 0;
+  let score = 0;
+  let gameQuestions = [];
+  const maxQuestionsInGame = 10;
+  
+  let cheatCount = 0;
+  let isGameOver = false;
+  let isGameStarted = false;
+
+  // คลังโจทย์ 30 ข้อ ครอบคลุมประพจน์ไม่เกิน 3 ตัว
+  const masterQuestions = [
+    { q: "T ∧ T", a: true },
+    { q: "T ∧ F", a: false },
+    { q: "F ∧ T", a: false },
+    { q: "F ∧ F", a: false },
+    { q: "T ∨ T", a: true },
+    { q: "T ∨ F", a: true },
+    { q: "F ∨ T", a: true },
+    { q: "F ∨ F", a: false },
+    { q: "T ∧ T ∧ T", a: true },
+    { q: "T ∧ T ∧ F", a: false },
+    { q: "T ∧ F ∧ T", a: false },
+    { q: "F ∧ T ∧ T", a: false },
+    { q: "T ∨ T ∨ T", a: true },
+    { q: "T ∨ T ∨ F", a: true },
+    { q: "T ∨ F ∨ T", a: true },
+    { q: "F ∨ F ∨ F", a: false },
+    { q: "(T ∧ T) ∨ T", a: true },
+    { q: "(T ∧ T) ∨ F", a: true },
+    { q: "(T ∧ F) ∨ T", a: true },
+    { q: "(T ∧ F) ∨ F", a: false },
+    { q: "(F ∧ F) ∨ T", a: true },
+    { q: "(F ∨ F) ∧ T", a: false },
+    { q: "(T ∨ F) ∧ F", a: false },
+    { q: "(F ∨ T) ∧ T", a: true },  
+    { q: "T ∧ (T ∨ F)", a: true },
+    { q: "T ∧ (F ∨ F)", a: false },
+    { q: "F ∧ (T ∨ T)", a: false },
+    { q: "F ∨ (T ∧ T)", a: true },
+    { q: "F ∨ (T ∧ F)", a: false },
+    { q: "T ∨ (F ∧ F)", a: true },
+    { q: "T ∧ (F ∧ T)", a: false },
+    { q: "F ∨ (F ∨ T)", a: true }
+  ];
+
+  function shuffleArray(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex != 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
+  function startGame() {
+    name = document.getElementById('student-name').value;
+    room = document.getElementById('student-room').value;
+    no = document.getElementById('student-no').value;
+
+    if (!name.trim() || !room.trim() || !no.trim()) {
+      alert("กรุณากรอกข้อมูล ชื่อ-นามสกุล ห้อง และเลขที่ ให้ครบถ้วนก่อนเข้าเล่น!");
+      return;
+    }
+
+    let shuffled = shuffleArray([...masterQuestions]);
+    gameQuestions = shuffled.slice(0, maxQuestionsInGame);
+
+    document.getElementById('display-info').innerText = name + " (" + room + " เลขที่ " + no + ")";
+    showScreen('game-screen');
+    isGameStarted = true;
+    loadQuestion();
+  }
+
+  function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+  }
+
+  function loadQuestion() {
+    if (currentLevel < gameQuestions.length && !isGameOver) {
+      const q = gameQuestions[currentLevel];
+      let formattedQ = q.q.replace(/∧/g, '<span class="logic-symbol">∧</span>')
+                          .replace(/∨/g, '<span class="logic-symbol">∨</span>')
+                          .replace(/T/g, '<span class="truth-value">T</span>')
+                          .replace(/F/g, '<span class="truth-value">F</span>');
+      
+      document.getElementById('question-text').innerHTML = formattedQ;
+      document.getElementById('current-level').innerText = currentLevel + 1;
+      document.getElementById('progress-inner').style.width = ((currentLevel) / gameQuestions.length * 100) + "%";
+    } else if (!isGameOver) {
+      endGame(false);
+    }
+  }
+
+  function checkAnswer(userAns) {
+    if (isGameOver) return;
+    const correctAns = gameQuestions[currentLevel].a;
+    
+    if (userAns === correctAns) {
+      score++;
+      document.getElementById('current-score').innerText = score;
+    }
+
+    currentLevel++;
+    if (currentLevel < gameQuestions.length) {
+      loadQuestion();
+    } else {
+      endGame(false);
+    }
+  }
+
+  function handleVisibilityChange() {
+    if (!isGameStarted || isGameOver) return;
+
+    if (document.hidden || !document.hasFocus()) {
+      cheatCount++;
+      document.getElementById('warning-count').innerText = cheatCount;
+      
+      if (cheatCount > 2) {
+        isGameOver = true;
+        endGame(true);
+      } else {
+        alert("⚠️ คำเตือนจากระบบ! ตรวจพบการสลับหน้าจอหรือเปิดแท็บอื่น คะแนนของท่านจะถูกหัก 1 คะแนน และหากทำผิดเกิน 2 ครั้ง จะถูกปรับแพ้ทันที!");
+        score = Math.max(0, score - 1);
+        document.getElementById('current-score').innerText = score;
+      }
+    }
+  }
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+  window.addEventListener("blur", handleVisibilityChange);
+
+  function endGame(isCheated) {
+    isGameOver = true;
+    showScreen('end-screen');
+    document.getElementById('final-score').innerText = score;
+    let msg = "";
+    let statusText = "ปกติ";
+    
+    if (isCheated) {
+      document.getElementById('end-title').innerText = "❌ คุณถูกปรับแพ้! (Game Over)";
+      document.getElementById('end-title').style.color = "var(--danger-color)";
+      msg = "เนื่องจากคุณทำผิดกฎสลับหน้าจอเกินจำนวนครั้งที่กำหนด ระบบจึงยุติการทำข้อสอบทันที";
+      statusText = "⚠️ ถูกปรับแพ้เนื่องจากสลับหน้าจอเกินกำหนด";
+    } else {
+      document.getElementById('end-title').innerText = "ภารกิจเสร็จสิ้น!";
+      document.getElementById('end-title').style.color = "var(--secondary-color)";
+      
+      if (score === 10) {
+        msg = "👑 สุดยอดไปเลยท่านจอมเวทย์ตรรกศาสตร์! เต็ม 10 ยอดเยี่ยมไร้ที่ติ!";
+        // 🔥 ปลุกมังกรบินออกมา + ใส่เอฟเฟกต์เรืองแสงที่ตัวเลขคะแนน
+        document.getElementById('dragon-sprite').classList.add('dragon-fly-in');
+        document.getElementById('score-box').classList.add('perfect-glow');
+      }
+      else if (score >= 8) msg = "เก่งมากนักรบ ความรู้ท่านแข็งแกร่งทีเดียว";
+      else if (score >= 5) msg = "ท่านผ่านเกณฑ์แบบหวุดหวิด จงฝึกฝนต่อไป";
+      else msg = "ดูเหมือนท่านต้องกลับไปอ่านคัมภีร์ตรรกศาสตร์มาใหม่นะ";
+    }
+    
+    document.getElementById('result-message').innerText = msg;
+    document.getElementById('progress-inner').style.width = "100%";
+
+    google.script.run
+      .withSuccessHandler(function(response) {
+        document.getElementById('save-status').innerText = response;
+        document.getElementById('save-status').style.color = "#00c853";
+      })
+      .withFailureHandler(function(error) {
+        document.getElementById('save-status').innerText = "เกิดข้อผิดพลาดในการส่งคะแนน";
+        document.getElementById('save-status').style.color = "#ff1744";
+      })
+      .saveScore({
+        name: name,
+        room: room,
+        no: no,
+        score: score,
+        status: statusText
+      });
+  }
+</script>
+
+</body>
+</html>
